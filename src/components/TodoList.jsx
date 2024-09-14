@@ -17,52 +17,53 @@ const TodoList = () => {
     data: {},
     edit: false
   })
+  const [timeframe, setTimeframe] = useState("all");
 
   const filteredTodos = useMemo(() => {
+    let tasks = [];
     switch (type) {
       case 'completed': {
-        return completedTasks
+        tasks = completedTasks;
+        break;
       }
       case 'deleted': {
-        return deletedTask
+        tasks = deletedTask;
+        break;
       }
-      case 'all': {
-        return [...todos, ...completedTasks]
-      }
+      case 'all':
       default: {
-        return [...todos, ...completedTasks]
+        tasks = [...todos, ...completedTasks];
       }
     }
-  }, [type, todos, completedTasks, deletedTask])
+    // Apply timeframe filter after filtering by task type
+    if (timeframe !== "all") {
+      return tasks.filter(task => task.timeFrame === timeframe);
+    }
+    return tasks;
+  }, [type, todos, completedTasks, deletedTask, timeframe]);
 
-  const handleTask = (type, el) => {
+  const handleTask = useCallback((type, el) => {
     if (type === "edit") {
       setIsEdit({ edit: !isEdit.edit, data: el });
-      dispatch(editTodo(el.id))
+      dispatch(editTodo(el.id));
     }
     if (type === "complete") {
-      dispatch(completeTodo(el.id))
+      dispatch(completeTodo(el.id));
     }
-    if (type == "delete") {
-      dispatch(deleteTodo(el.id))
+    if (type === "delete") {
+      dispatch(deleteTodo(el.id));
     }
-  }
+  }, [dispatch, isEdit.edit]);
 
-  const handleMultiple = (type, ids) => {
-
+  const handleMultiple = useCallback((type, ids) => {
     if (type === "completeMultiple") {
-      console.log('Completeids', ids)
-
-      ids.forEach((id) => dispatch(completeTodo(id)))
-
+      ids.forEach((id) => dispatch(completeTodo(id)));
     }
-
     if (type === "deleteMultiple") {
-      console.log('Delteids', ids)
-      ids.forEach((id) => dispatch(deleteTodo(id)))
-
+      ids.forEach((id) => dispatch(deleteTodo(id)));
     }
-  }
+  }, [dispatch]);
+
 
   const handleCloseEdit = () => {
     setIsEdit({ data: {}, edit: false });
@@ -79,6 +80,20 @@ const TodoList = () => {
         <button onClick={() => setType('completed')}>Completed Tasks</button>
         <button onClick={() => setType('deleted')} >Deleted Tasks</button>
 
+      </div>
+
+      {/* Timeframe Filter */}
+      <div>
+        <label htmlFor="timeframe">Filter by Timeframe:</label>
+        <select
+          id="timeframe"
+          value={timeframe}
+          onChange={(e) => setTimeframe(e.target.value)}
+        >
+          <option value="all">All</option>
+          <option value="week">Week</option>
+          <option value="month">Month</option>
+        </select>
       </div>
 
       <div>
@@ -103,7 +118,7 @@ const TodoList = () => {
                 <div className='mt-5'>
                   <input disabled={el.isCompleted || el.isDeleted} type="checkbox" onChange={(e) => setSelectIds((prev) => [...prev, el.id])} />
 
-                  {el.name}: {el.class}: {el.subject}
+                  {el.name}: {el.class}: {el.subject} : {el.timeFrame}
 
                   <button disabled={el?.isCompleted || el.isDeleted} onClick={() => handleTask("edit", el)}>Edit</button>
                   <button disabled={el?.isCompleted || el.isDeleted} onClick={() => handleTask("complete", el)}>{el.isCompleted ? "Completed" : "Complete"}</button>
